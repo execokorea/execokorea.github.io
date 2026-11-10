@@ -1,0 +1,355 @@
+<!doctype html>
+<html lang="ko">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>eXeco Technical Briefing</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@500&family=Noto+Sans+KR:wght@400;500;700;800&display=swap">
+<style>
+/* Layout: 960px 단일 컬럼 기술 브리핑. 검정 바탕 + 노란 포인트 한 가지 룩(단일 테마).
+   섹션 순서: 헤더 → 서비스 맵 → 아키텍처 → 시스템 구성 → 데이터 → 예측 모델 → 검증 → 용어. */
+:root {
+  --bg: #000000;
+  --surface: #141414;
+  --line: #2b2b2b;
+  --fg: #ffffff;
+  --body: #d9d9d9;
+  --muted: #a3a3a3;
+  --accent: #f0ff46;
+  --on-accent: #000000;
+  --font-body: "Noto Sans KR", system-ui, -apple-system, "Apple SD Gothic Neo", "Malgun Gothic", sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, Menlo, Consolas, monospace;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body {
+  background: var(--bg); color: var(--fg);
+  font-family: var(--font-body); font-size: 16px; line-height: 1.5;
+  padding-block: clamp(56px, 10vw, 120px);
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  word-break: keep-all; overflow-wrap: anywhere;
+}
+main { max-width: 960px; margin: 0 auto; display: flex; flex-direction: column; gap: clamp(56px, 8vw, 80px); }
+h1, h2, h3, p, ul { margin: 0; }
+section { display: flex; flex-direction: column; min-width: 0; }
+h2 { font-size: clamp(28px, 5vw, 36px); line-height: 1.5; font-weight: 700; text-wrap: balance; }
+h3 { font-size: 22px; line-height: 1.5; font-weight: 700; padding-top: 16px; }
+.sec-head { display: flex; flex-direction: column; padding-bottom: 16px; }
+.sec-head p { font-size: 17px; color: var(--body); }
+.mono { font-family: var(--font-mono); font-weight: 500; }
+
+/* 헤더 */
+header { display: flex; flex-direction: column; gap: 13px; }
+.eyebrow { font: 500 14px/1.5 var(--font-mono); letter-spacing: .12em; color: var(--accent); text-transform: uppercase; }
+h1 { line-height: 0; }
+h1 .logo { display: block; width: min(100%, 761px); height: auto; }
+.lead { font-size: clamp(17px, 2.2vw, 20px); color: var(--body); }
+.box { background: var(--surface); border-radius: 16px; padding: 28px; font-size: 17px; color: var(--body); margin-top: 0; }
+.box strong { font-weight: 700; display: inline-flex; align-items: center; gap: 4px; }
+.box svg { width: 16px; height: 16px; fill: var(--accent); flex: none; }
+
+/* 서비스 맵 */
+.map { gap: 20px; padding-bottom: 16px; border-bottom: 1px solid var(--line); }
+.circles { list-style: none; padding: 16px 24px 0; display: flex; flex-wrap: wrap; justify-content: center; gap: 32px 53px; }
+.circles li { width: 200px; display: flex; flex-direction: column; align-items: center; gap: 16px; }
+.circle { width: 200px; height: 200px; border: 2px solid var(--accent); border-radius: 50%; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; }
+.circle .who { font-size: 12px; font-weight: 700; }
+.circle .name { font-size: 22px; font-weight: 800; line-height: 1.5; }
+.circle .ver { font-size: 14px; font-weight: 700; color: var(--muted); }
+a.circle { color: var(--fg); text-decoration: none; cursor: pointer; transition: background .18s ease, color .18s ease, transform .18s ease; -webkit-tap-highlight-color: transparent; }
+a.circle:hover, a.circle:focus-visible { background: var(--accent); color: var(--on-accent); transform: translateY(-3px); outline: none; }
+a.circle:hover .ver, a.circle:focus-visible .ver { color: #333; }
+a.circle:active { transform: none; }
+@media (hover: none) { a.circle:hover { background: transparent; color: var(--fg); transform: none; } a.circle:hover .ver { color: var(--muted); } a.circle:active { background: var(--accent); color: var(--on-accent); } a.circle:active .ver { color: #333; } }
+.cap { font-size: 12px; color: var(--muted); text-align: center; }
+
+/* 아키텍처 */
+.arch { gap: 24px; }
+.arch .sec-head { padding-bottom: 0; }
+.diagram { display: flex; flex-direction: column; gap: 16px; padding-top: 8px; }
+.layer { display: grid; grid-template-columns: 116px minmax(0, 1fr); gap: 12px; align-items: start; }
+.layer-label { display: flex; flex-direction: column; gap: 2px; padding-top: 14px; }
+.layer-label .mono { font-size: 12px; letter-spacing: .08em; color: var(--accent); }
+.layer-label span:last-child { font-size: 13px; color: var(--muted); }
+.items { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 10px; }
+.item { background: var(--surface); border-radius: 12px; padding: 14px 16px; display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.item b { font-size: 14px; font-weight: 700; }
+.item span { font-size: 12px; color: var(--muted); }
+.item.pill { background: none; border: 2px solid var(--accent); border-radius: 999px; align-items: center; justify-content: center; text-align: center; }
+.item.out { border: 1px solid var(--line); }
+.step-arrow { display: flex; align-items: center; gap: 10px; padding-left: 128px; color: var(--muted); line-height: 1; }
+.step-arrow span:first-child { font-size: 18px; }
+.step-arrow span:last-child { font-size: 12px; }
+
+/* 시스템 구성 */
+.system { gap: 0; }
+.flow { position: relative; display: flex; flex-direction: column; align-items: center; gap: 14px; padding-block: 16px 34px; }
+.flow-lines { display: none; }
+.flow-pill { position: relative; z-index: 1; display: flex; flex-direction: column; align-items: center; gap: 14px; }
+.flow-pill small { font-size: 13px; font-weight: 500; color: var(--muted); white-space: nowrap; }
+.pill-btn { background: var(--accent); color: var(--on-accent); border-radius: 999px; padding: 12px 28px; font-size: 16px; font-weight: 700; white-space: nowrap; }
+.flow-down { color: var(--muted); font-size: 18px; line-height: 1; }
+.flow-local { font-size: 13px; font-weight: 500; color: var(--muted); white-space: nowrap; }
+.flow-cards { width: 100%; display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 14px; }
+.node { background: var(--surface); border-radius: 12px; padding: 20px; display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+.node .k { font-size: 14px; color: var(--muted); }
+.node .t { font-size: 16px; font-weight: 700; }
+.node .t.hi { color: var(--accent); }
+.node .d { font-size: 14px; color: var(--muted); }
+.flow-note { font-size: 12px; color: var(--muted); }
+@media (min-width: 1000px) {
+  .flow { display: block; height: 423px; padding: 0; }
+  .flow-lines { display: block; position: absolute; left: 0; top: 0; width: 960px; height: 423px; z-index: 0; }
+  .flow-lines .ln { fill: none; stroke: var(--accent); stroke-width: 2; }
+  .flow-lines .dash { fill: none; stroke: var(--fg); stroke-width: 2; stroke-dasharray: 7 7; }
+  .flow-lines .head-y { fill: none; stroke: var(--accent); stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+  .flow-lines .head-w { fill: none; stroke: var(--fg); stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+  .flow-pill { position: absolute; left: 392px; top: 16px; width: 182px; }
+  .flow-down, .flow-note { display: none; }
+  .flow-local { position: absolute; left: 404px; top: 193px; }
+  .flow-cards { position: absolute; left: 0; right: 0; top: 222px; width: auto; grid-template-columns: repeat(4, 1fr); }
+  .node { min-height: 139px; }
+}
+
+/* 표 */
+.table-wrap { overflow-x: auto; background: var(--surface); border-radius: 16px; }
+.table-wrap:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+table { width: 100%; min-width: 720px; border-collapse: collapse; table-layout: fixed; }
+th, td { text-align: left; vertical-align: top; padding: 16px 12px; border-bottom: 1px solid var(--line); font-size: 14px; line-height: 1.5; color: var(--body); }
+th { padding-block: 14px; font-size: 13px; font-weight: 500; color: var(--accent); }
+th:first-child, td:first-child { padding-left: 20px; }
+th:last-child, td:last-child { padding-right: 20px; }
+td:first-child { font-weight: 500; color: var(--fg); }
+tbody tr:last-child td { border-bottom: 0; }
+.tbl-hi td:first-child { color: var(--accent); }
+.data, .model, .validation, .glossary { }
+.data { gap: 19px; }
+.model { gap: 29px; }
+.validation, .glossary { gap: 24px; }
+.validation .sec-head, .glossary .sec-head { padding-bottom: 0; }
+.notes { font-size: 16px; color: var(--body); }
+.pipe { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 12px; }
+.pipe .node { min-height: 171px; }
+.small-note { font-size: 14px; color: var(--muted); display: flex; flex-direction: column; }
+</style>
+
+<main>
+  <header>
+    <div class="eyebrow">Technical Briefing</div>
+    <h1 aria-label="execo Technical Briefing"><svg class="logo" viewBox="0 0 761 59" fill="none" aria-hidden="true" focusable="false" xmlns="http://www.w3.org/2000/svg">
+<path d="M211.439 45.42C207.331 45.42 203.618 44.5247 200.3 42.734C196.982 40.8907 194.348 38.3627 192.4 35.15C190.451 31.9373 189.477 28.277 189.477 24.169C189.477 20.851 190.109 17.7437 191.373 14.847C192.637 11.9503 194.401 9.42233 196.666 7.263C198.93 5.10367 201.537 3.41833 204.487 2.207C207.436 0.995667 210.596 0.389999 213.967 0.389999C218.075 0.389999 221.788 1.31167 225.106 3.155C228.424 4.94567 231.031 7.44733 232.927 10.66C234.875 13.82 235.85 17.4803 235.85 21.641C235.85 24.959 235.218 28.0663 233.954 30.963C232.69 33.807 230.925 36.335 228.661 38.547C226.396 40.7063 223.789 42.3917 220.84 43.603C217.89 44.8143 214.757 45.42 211.439 45.42ZM211.597 34.755C213.967 34.755 216.047 34.1757 217.838 33.017C219.628 31.8057 221.024 30.1993 222.025 28.198C223.025 26.1967 223.526 23.9583 223.526 21.483C223.526 19.429 223.131 17.6383 222.341 16.111C221.551 14.531 220.418 13.2933 218.944 12.398C217.522 11.5027 215.81 11.055 213.809 11.055C211.439 11.055 209.332 11.6607 207.489 12.872C205.698 14.0307 204.302 15.6107 203.302 17.612C202.301 19.6133 201.801 21.8517 201.801 24.327C201.801 26.381 202.196 28.198 202.986 29.778C203.776 31.3053 204.908 32.5167 206.383 33.412C207.857 34.3073 209.595 34.755 211.597 34.755Z" fill="#F0FF46"/>
+<path d="M162.058 45.42C157.897 45.42 154.158 44.4983 150.84 42.655C147.575 40.8117 144.994 38.2837 143.098 35.071C141.255 31.8583 140.333 28.2243 140.333 24.169C140.333 20.851 140.965 17.7437 142.229 14.847C143.493 11.9503 145.231 9.42233 147.443 7.263C149.655 5.10367 152.209 3.41833 155.106 2.207C158.055 0.995667 161.215 0.389999 164.586 0.389999C167.851 0.389999 170.827 0.969333 173.513 2.128C176.199 3.234 178.464 4.78767 180.307 6.789C182.15 8.79033 183.414 11.134 184.099 13.82L173.592 17.928C173.013 15.7687 171.907 14.0833 170.274 12.872C168.641 11.6607 166.693 11.055 164.428 11.055C162.058 11.055 159.978 11.6607 158.187 12.872C156.449 14.0833 155.08 15.6897 154.079 17.691C153.131 19.6923 152.657 21.8517 152.657 24.169C152.657 26.2757 153.052 28.119 153.842 29.699C154.632 31.279 155.738 32.5167 157.16 33.412C158.635 34.3073 160.32 34.755 162.216 34.755C164.691 34.755 166.851 34.0967 168.694 32.78C170.537 31.4633 171.907 29.7253 172.802 27.566L182.835 32.385C181.834 34.913 180.307 37.1777 178.253 39.179C176.252 41.1277 173.855 42.655 171.064 43.761C168.273 44.867 165.271 45.42 162.058 45.42Z" fill="#F0FF46"/>
+<path d="M113.291 45.42C108.92 45.42 105.128 44.4983 101.915 42.655C98.7023 40.759 96.2269 38.2047 94.4889 34.992C92.8036 31.7793 91.9609 28.2243 91.9609 24.327C91.9609 21.009 92.5403 17.928 93.6989 15.084C94.8576 12.1873 96.4903 9.633 98.5969 7.421C100.704 5.209 103.153 3.49733 105.944 2.286C108.735 1.022 111.764 0.389999 115.029 0.389999C119.4 0.389999 123.087 1.259 126.089 2.997C129.091 4.68233 131.356 6.99967 132.883 9.949C134.463 12.8983 135.253 16.2427 135.253 19.982C135.253 20.9827 135.174 21.9833 135.016 22.984C134.858 23.9847 134.647 25.0643 134.384 26.223H101.994L102.626 17.533H128.222L122.297 21.483C122.982 19.271 123.113 17.296 122.692 15.558C122.271 13.82 121.375 12.4507 120.006 11.45C118.689 10.3967 117.004 9.87 114.95 9.87C112.264 9.87 110.131 10.5547 108.551 11.924C106.971 13.2933 105.812 15.1103 105.075 17.375C104.39 19.6397 104.048 22.1413 104.048 24.88C104.048 27.0393 104.417 28.909 105.154 30.489C105.891 32.0163 106.971 33.175 108.393 33.965C109.815 34.755 111.527 35.15 113.528 35.15C115.687 35.15 117.583 34.7023 119.216 33.807C120.849 32.9117 122.113 31.7267 123.008 30.252L132.33 35.071C131.329 37.1777 129.881 39.021 127.985 40.601C126.089 42.1283 123.877 43.3133 121.349 44.156C118.874 44.9987 116.188 45.42 113.291 45.42Z" fill="#F0FF46"/>
+<path d="M42.7815 44.472L61.1095 22.51L49.1805 1.338H62.0575L71.1425 18.086H65.1385L78.8055 1.338H92.9465L74.7765 22.826L86.7845 44.472H74.1445L64.9015 27.724H70.2735L56.8435 44.472H42.7815Z" fill="#F0FF46"/>
+<path d="M21.33 45.42C16.9587 45.42 13.1667 44.4983 9.954 42.655C6.74133 40.759 4.266 38.2047 2.528 34.992C0.842666 31.7793 0 28.2243 0 24.327C0 21.009 0.579334 17.928 1.738 15.084C2.89667 12.1873 4.52933 9.633 6.636 7.421C8.74267 5.209 11.1917 3.49733 13.983 2.286C16.7743 1.022 19.8027 0.389999 23.068 0.389999C27.4393 0.389999 31.126 1.259 34.128 2.997C37.13 4.68233 39.3947 6.99967 40.922 9.949C42.502 12.8983 43.292 16.2427 43.292 19.982C43.292 20.9827 43.213 21.9833 43.055 22.984C42.897 23.9847 42.6863 25.0643 42.423 26.223H10.033L10.665 17.533H36.261L30.336 21.483C31.0207 19.271 31.1523 17.296 30.731 15.558C30.3097 13.82 29.4143 12.4507 28.045 11.45C26.7283 10.3967 25.043 9.87 22.989 9.87C20.303 9.87 18.17 10.5547 16.59 11.924C15.01 13.2933 13.8513 15.1103 13.114 17.375C12.4293 19.6397 12.087 22.1413 12.087 24.88C12.087 27.0393 12.4557 28.909 13.193 30.489C13.9303 32.0163 15.01 33.175 16.432 33.965C17.854 34.755 19.5657 35.15 21.567 35.15C23.7263 35.15 25.6223 34.7023 27.255 33.807C28.8877 32.9117 30.1517 31.7267 31.047 30.252L40.369 35.071C39.3683 37.1777 37.92 39.021 36.024 40.601C34.128 42.1283 31.916 43.3133 29.388 44.156C26.9127 44.9987 24.2267 45.42 21.33 45.42Z" fill="#F0FF46"/>
+<path d="M258.631 45.42V8.82H247.291V0.719994H279.091V8.82H267.931V45.42H258.631ZM294.598 46.14C291.118 46.14 288.098 45.38 285.538 43.86C282.978 42.3 280.998 40.22 279.598 37.62C278.198 35.02 277.498 32.14 277.498 28.98C277.498 25.7 278.218 22.78 279.658 20.22C281.138 17.66 283.118 15.64 285.598 14.16C288.078 12.68 290.878 11.94 293.998 11.94C296.598 11.94 298.898 12.36 300.898 13.2C302.898 14 304.578 15.14 305.938 16.62C307.338 18.1 308.398 19.82 309.118 21.78C309.838 23.7 310.198 25.8 310.198 28.08C310.198 28.72 310.158 29.36 310.078 30C310.038 30.6 309.938 31.12 309.778 31.56H285.238V24.96H304.678L300.418 28.08C300.818 26.36 300.798 24.84 300.358 23.52C299.918 22.16 299.138 21.1 298.018 20.34C296.938 19.54 295.598 19.14 293.998 19.14C292.438 19.14 291.098 19.52 289.978 20.28C288.858 21.04 288.018 22.16 287.458 23.64C286.898 25.12 286.678 26.92 286.798 29.04C286.638 30.88 286.858 32.5 287.458 33.9C288.058 35.3 288.978 36.4 290.218 37.2C291.458 37.96 292.958 38.34 294.718 38.34C296.318 38.34 297.678 38.02 298.798 37.38C299.958 36.74 300.858 35.86 301.498 34.74L308.698 38.16C308.058 39.76 307.038 41.16 305.638 42.36C304.278 43.56 302.658 44.5 300.778 45.18C298.898 45.82 296.838 46.14 294.598 46.14ZM331.577 46.14C328.297 46.14 325.337 45.4 322.697 43.92C320.097 42.4 318.017 40.34 316.457 37.74C314.937 35.14 314.177 32.22 314.177 28.98C314.177 25.74 314.937 22.84 316.457 20.28C317.977 17.68 320.057 15.64 322.697 14.16C325.337 12.68 328.297 11.94 331.577 11.94C334.017 11.94 336.277 12.36 338.357 13.2C340.437 14.04 342.217 15.22 343.697 16.74C345.177 18.22 346.237 19.98 346.877 22.02L339.077 25.38C338.517 23.74 337.557 22.44 336.197 21.48C334.877 20.52 333.337 20.04 331.577 20.04C330.017 20.04 328.617 20.42 327.377 21.18C326.177 21.94 325.217 23 324.497 24.36C323.817 25.72 323.477 27.28 323.477 29.04C323.477 30.8 323.817 32.36 324.497 33.72C325.217 35.08 326.177 36.14 327.377 36.9C328.617 37.66 330.017 38.04 331.577 38.04C333.377 38.04 334.937 37.56 336.257 36.6C337.577 35.64 338.517 34.34 339.077 32.7L346.877 36.12C346.277 38.04 345.237 39.76 343.757 41.28C342.277 42.8 340.497 44 338.417 44.88C336.337 45.72 334.057 46.14 331.577 46.14ZM352.177 45.42V-3.57628e-06H361.177V19.14L360.097 17.7C360.857 15.74 362.077 14.3 363.757 13.38C365.477 12.42 367.477 11.94 369.757 11.94C372.237 11.94 374.397 12.46 376.237 13.5C378.117 14.54 379.577 16 380.617 17.88C381.657 19.72 382.177 21.88 382.177 24.36V45.42H373.177V26.28C373.177 25 372.917 23.9 372.397 22.98C371.917 22.06 371.217 21.34 370.297 20.82C369.417 20.3 368.377 20.04 367.177 20.04C366.017 20.04 364.977 20.3 364.057 20.82C363.137 21.34 362.417 22.06 361.897 22.98C361.417 23.9 361.177 25 361.177 26.28V45.42H352.177ZM388.095 45.42V12.66H396.495V19.14L396.015 17.7C396.775 15.74 397.995 14.3 399.675 13.38C401.395 12.42 403.395 11.94 405.675 11.94C408.155 11.94 410.315 12.46 412.155 13.5C414.035 14.54 415.495 16 416.535 17.88C417.575 19.72 418.095 21.88 418.095 24.36V45.42H409.095V26.28C409.095 25 408.835 23.9 408.315 22.98C407.835 22.06 407.135 21.34 406.215 20.82C405.335 20.3 404.295 20.04 403.095 20.04C401.935 20.04 400.895 20.3 399.975 20.82C399.055 21.34 398.335 22.06 397.815 22.98C397.335 23.9 397.095 25 397.095 26.28V45.42H388.095ZM424.013 45.42V12.66H433.013V45.42H424.013ZM424.013 9.72V0.719994H433.013V9.72H424.013ZM455.679 46.14C452.399 46.14 449.439 45.4 446.799 43.92C444.199 42.4 442.119 40.34 440.559 37.74C439.039 35.14 438.279 32.22 438.279 28.98C438.279 25.74 439.039 22.84 440.559 20.28C442.079 17.68 444.159 15.64 446.799 14.16C449.439 12.68 452.399 11.94 455.679 11.94C458.119 11.94 460.379 12.36 462.459 13.2C464.539 14.04 466.319 15.22 467.799 16.74C469.279 18.22 470.339 19.98 470.979 22.02L463.179 25.38C462.619 23.74 461.659 22.44 460.299 21.48C458.979 20.52 457.439 20.04 455.679 20.04C454.119 20.04 452.719 20.42 451.479 21.18C450.279 21.94 449.319 23 448.599 24.36C447.919 25.72 447.579 27.28 447.579 29.04C447.579 30.8 447.919 32.36 448.599 33.72C449.319 35.08 450.279 36.14 451.479 36.9C452.719 37.66 454.119 38.04 455.679 38.04C457.479 38.04 459.039 37.56 460.359 36.6C461.679 35.64 462.619 34.34 463.179 32.7L470.979 36.12C470.379 38.04 469.339 39.76 467.859 41.28C466.379 42.8 464.599 44 462.519 44.88C460.439 45.72 458.159 46.14 455.679 46.14ZM486.419 46.14C484.059 46.14 482.019 45.76 480.299 45C478.579 44.24 477.259 43.16 476.339 41.76C475.419 40.32 474.959 38.62 474.959 36.66C474.959 34.82 475.379 33.2 476.219 31.8C477.059 30.36 478.339 29.16 480.059 28.2C481.819 27.24 483.999 26.56 486.599 26.16L496.619 24.54V31.14L488.219 32.64C486.939 32.88 485.959 33.3 485.279 33.9C484.599 34.46 484.259 35.28 484.259 36.36C484.259 37.36 484.639 38.14 485.399 38.7C486.159 39.26 487.099 39.54 488.219 39.54C489.699 39.54 490.999 39.22 492.119 38.58C493.239 37.94 494.099 37.08 494.699 36C495.339 34.88 495.659 33.66 495.659 32.34V23.82C495.659 22.58 495.159 21.54 494.159 20.7C493.199 19.86 491.879 19.44 490.199 19.44C488.599 19.44 487.179 19.88 485.939 20.76C484.739 21.64 483.859 22.8 483.299 24.24L476.099 20.82C476.739 18.98 477.759 17.4 479.159 16.08C480.559 14.76 482.239 13.74 484.199 13.02C486.159 12.3 488.299 11.94 490.619 11.94C493.379 11.94 495.819 12.44 497.939 13.44C500.059 14.44 501.699 15.84 502.859 17.64C504.059 19.4 504.659 21.46 504.659 23.82V45.42H496.259V40.14L498.299 39.78C497.339 41.22 496.279 42.42 495.119 43.38C493.959 44.3 492.659 44.98 491.219 45.42C489.779 45.9 488.179 46.14 486.419 46.14ZM511.259 45.42V-3.57628e-06H520.259V45.42H511.259ZM538.286 45.42V0.719994H557.186C560.266 0.719994 562.906 1.23999 565.106 2.28C567.306 3.32 568.986 4.82 570.146 6.77999C571.306 8.7 571.886 11.04 571.886 13.8C571.886 15.76 571.346 17.64 570.266 19.44C569.186 21.2 567.406 22.68 564.926 23.88V19.32C567.286 20.24 569.106 21.34 570.386 22.62C571.666 23.9 572.546 25.3 573.026 26.82C573.506 28.3 573.746 29.86 573.746 31.5C573.746 35.9 572.286 39.32 569.366 41.76C566.446 44.2 562.386 45.42 557.186 45.42H538.286ZM547.586 37.32H558.266C560.146 37.32 561.646 36.78 562.766 35.7C563.886 34.62 564.446 33.22 564.446 31.5C564.446 29.74 563.886 28.32 562.766 27.24C561.646 26.16 560.146 25.62 558.266 25.62H547.586V37.32ZM547.586 17.52H557.846C559.286 17.52 560.426 17.12 561.266 16.32C562.146 15.48 562.586 14.38 562.586 13.02C562.586 11.66 562.146 10.58 561.266 9.78C560.426 8.94 559.286 8.52 557.846 8.52H547.586V17.52ZM579.052 45.42V12.66H587.452V20.52L586.852 19.38C587.572 16.62 588.752 14.76 590.392 13.8C592.072 12.8 594.052 12.3 596.332 12.3H598.252V20.1H595.432C593.232 20.1 591.452 20.78 590.092 22.14C588.732 23.46 588.052 25.34 588.052 27.78V45.42H579.052ZM602.196 45.42V12.66H611.196V45.42H602.196ZM602.196 9.72V0.719994H611.196V9.72H602.196ZM633.562 46.14C630.082 46.14 627.062 45.38 624.502 43.86C621.942 42.3 619.962 40.22 618.562 37.62C617.162 35.02 616.462 32.14 616.462 28.98C616.462 25.7 617.182 22.78 618.622 20.22C620.102 17.66 622.082 15.64 624.562 14.16C627.042 12.68 629.842 11.94 632.962 11.94C635.562 11.94 637.862 12.36 639.862 13.2C641.862 14 643.542 15.14 644.902 16.62C646.302 18.1 647.362 19.82 648.082 21.78C648.802 23.7 649.162 25.8 649.162 28.08C649.162 28.72 649.122 29.36 649.042 30C649.002 30.6 648.902 31.12 648.742 31.56H624.202V24.96H643.642L639.382 28.08C639.782 26.36 639.762 24.84 639.322 23.52C638.882 22.16 638.102 21.1 636.982 20.34C635.902 19.54 634.562 19.14 632.962 19.14C631.402 19.14 630.062 19.52 628.942 20.28C627.822 21.04 626.982 22.16 626.422 23.64C625.862 25.12 625.642 26.92 625.762 29.04C625.602 30.88 625.822 32.5 626.422 33.9C627.022 35.3 627.942 36.4 629.182 37.2C630.422 37.96 631.922 38.34 633.682 38.34C635.282 38.34 636.642 38.02 637.762 37.38C638.922 36.74 639.822 35.86 640.462 34.74L647.662 38.16C647.022 39.76 646.002 41.16 644.602 42.36C643.242 43.56 641.622 44.5 639.742 45.18C637.862 45.82 635.802 46.14 633.562 46.14ZM658.422 45.42V20.46H652.902V12.66H658.422V12.18C658.422 9.58 658.922 7.38 659.922 5.58C660.962 3.78 662.442 2.4 664.362 1.44C666.282 0.479996 668.602 -3.57628e-06 671.322 -3.57628e-06C671.842 -3.57628e-06 672.402 0.0399959 673.002 0.119995C673.602 0.159997 674.102 0.219997 674.502 0.299996V7.98C674.102 7.9 673.742 7.86 673.422 7.86C673.142 7.82 672.842 7.8 672.522 7.8C670.842 7.8 669.562 8.18 668.682 8.94C667.842 9.66 667.422 10.74 667.422 12.18V12.66H680.442V20.46H667.422V45.42H658.422ZM677.802 45.42V12.66H686.802V45.42H677.802ZM692.724 45.42V12.66H701.124V19.14L700.644 17.7C701.404 15.74 702.624 14.3 704.304 13.38C706.024 12.42 708.024 11.94 710.304 11.94C712.784 11.94 714.944 12.46 716.784 13.5C718.664 14.54 720.124 16 721.164 17.88C722.204 19.72 722.724 21.88 722.724 24.36V45.42H713.724V26.28C713.724 25 713.464 23.9 712.944 22.98C712.464 22.06 711.764 21.34 710.844 20.82C709.964 20.3 708.924 20.04 707.724 20.04C706.564 20.04 705.524 20.3 704.604 20.82C703.684 21.34 702.964 22.06 702.444 22.98C701.964 23.9 701.724 25 701.724 26.28V45.42H692.724ZM744.722 58.62C742.202 58.62 739.862 58.2 737.702 57.36C735.542 56.52 733.682 55.34 732.122 53.82C730.602 52.34 729.502 50.58 728.822 48.54L737.162 45.6C737.602 47.12 738.502 48.32 739.862 49.2C741.222 50.08 742.842 50.52 744.722 50.52C746.202 50.52 747.482 50.24 748.562 49.68C749.642 49.16 750.462 48.38 751.022 47.34C751.622 46.3 751.922 45.08 751.922 43.68V36.18L753.662 38.34C752.542 40.18 751.102 41.56 749.342 42.48C747.582 43.36 745.522 43.8 743.162 43.8C740.122 43.8 737.402 43.12 735.002 41.76C732.602 40.36 730.722 38.46 729.362 36.06C728.002 33.62 727.322 30.86 727.322 27.78C727.322 24.7 728.002 21.98 729.362 19.62C730.722 17.22 732.582 15.34 734.942 13.98C737.302 12.62 739.982 11.94 742.982 11.94C745.342 11.94 747.402 12.42 749.162 13.38C750.922 14.3 752.422 15.72 753.662 17.64L752.522 19.8V12.66H760.922V43.68C760.922 46.56 760.222 49.12 758.822 51.36C757.422 53.64 755.502 55.42 753.062 56.7C750.662 57.98 747.882 58.62 744.722 58.62ZM744.422 35.64C745.942 35.64 747.262 35.32 748.382 34.68C749.502 34.04 750.362 33.14 750.962 31.98C751.602 30.82 751.922 29.46 751.922 27.9C751.922 26.34 751.602 24.98 750.962 23.82C750.322 22.62 749.442 21.7 748.322 21.06C747.202 20.38 745.902 20.04 744.422 20.04C742.902 20.04 741.542 20.38 740.342 21.06C739.182 21.7 738.262 22.62 737.582 23.82C736.942 24.98 736.622 26.34 736.622 27.9C736.622 29.42 736.942 30.76 737.582 31.92C738.262 33.08 739.182 34 740.342 34.68C741.542 35.32 742.902 35.64 744.422 35.64Z" fill="white"/>
+</svg></h1>
+    <p class="lead">엑세코는 1MW 이하 소규모 태양광 발전소(또는 관리 업체)가 KPX 전력 입찰 시장에 참여해 (현) 한전 직거래보다 많은 보상금 수익을 얻을 수 있게 하는 VPP(가상발전소) 플랫폼입니다.</p>
+    <div class="box">
+      <p><strong><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M13.5 1 4 13.5h6.2L9 23l10.5-13.2h-6.4z"/></svg>엑세코 개발 배경</strong><br>신재생 에너지의 선두이자 전력 특구 제주는 최근 15분 단위 계통 운영까지 실현하며 실시간 전력 시장을 이끌고 있습니다. 그러나 10년간 이어진 정부의 태양광 지원 정책으로 늘어난 숨은 태양광(Behind-the-Meter, BTM)으로, 갑작스러운 발전소 중단과 대규모 정전이 자주 발생하고 있습니다. 엑세코는 숨은 태양광의 전력 시장 참여와 계통 안정화를 위해 기상・전력・관광 분야 25만개 데이터로 트레이닝한 예측 모델과 VPP플랫폼을 개발했습니다.</p>
+    </div>
+  </header>
+
+  <section class="map" aria-labelledby="h-map">
+    <h2 id="h-map">서비스 맵</h2>
+    <ul class="circles">
+      <li><a class="circle" href="https://ib-macbookpro.tail918684.ts.net:8443/" target="_blank" rel="noopener noreferrer" aria-label="메인 대시보드 열기"><span class="who">서비스 모니터링</span><strong class="name">메인 대시보드</strong><span class="ver">Streamlit v4</span></a><p class="cap">실시간 수급, 예측, 지도 시각화</p></li>
+      <li><a class="circle" href="https://ib-macbookpro.tail918684.ts.net:10000/v7/" target="_blank" rel="noopener noreferrer" aria-label="발전소 관리 웹 열기"><span class="who">VPP &amp; 유지 보수 업체</span><strong class="name">발전소 관리 웹</strong><span class="ver">V.7</span></a><p class="cap">React + Vite 기반 플랫폼 대시보드</p></li>
+      <li><a class="circle" href="https://ib-macbookpro.tail918684.ts.net:10000/mobile/" target="_blank" rel="noopener noreferrer" aria-label="모바일 웹앱 열기"><span class="who">발전소주</span><strong class="name">모바일 웹앱</strong></a><p class="cap">정산 시뮬레이터 등 모바일 최적화</p></li>
+    </ul>
+  </section>
+
+  <section class="arch" aria-labelledby="h-arch">
+    <div class="sec-head">
+      <h2 id="h-arch">아키텍처</h2>
+      <p>공개 데이터를 수집해 CSV로 쌓고, 세 개의 예측 모델을 학습해 API로 제공합니다.<br>같은 예측값을 대시보드와 eXeco 입찰 화면이 함께 사용합니다.</p>
+    </div>
+    <div class="diagram">
+      <div class="layer">
+        <div class="layer-label"><span class="mono">DATA SOURCES</span><span>외부 공개 데이터</span></div>
+        <div class="items">
+          <div class="item"><b>전력거래소 · EPSIS</b><span>전국 수급, SMP, 연료비</span></div>
+          <div class="item"><b>공공데이터포털</b><span>제주 전력수요, 항공·해운</span></div>
+          <div class="item"><b>기상청</b><span>ASOS 관측, 실시간 기상</span></div>
+          <div class="item"><b>제주관광협회</b><span>입도객 통계</span></div>
+        </div>
+      </div>
+      <div class="step-arrow"><span aria-hidden="true">↓</span><span>주기 수집 (5~15분 · 일·월 단위)</span></div>
+      <div class="layer">
+        <div class="layer-label"><span class="mono">COLLECTOR</span><span>수집 스크립트 16개</span></div>
+        <div class="items">
+          <div class="item"><b>HTTP 크롤러</b><span>requests + BeautifulSoup</span></div>
+          <div class="item"><b>브라우저 자동화</b><span>Selenium + EasyOCR (이미지 표 읽기)</span></div>
+          <div class="item"><b>공식 OpenAPI</b><span>인증키 기반 API 호출</span></div>
+        </div>
+      </div>
+      <div class="step-arrow"><span aria-hidden="true">↓</span><span>CSV로 저장</span></div>
+      <div class="layer">
+        <div class="layer-label"><span class="mono">STORAGE</span><span>저장과 가공</span></div>
+        <div class="items">
+          <div class="item"><b>CSV 저장소</b><span>SMP · 전력 · 기상 · 입도객 데이터</span></div>
+          <div class="item"><b>피처 엔지니어링</b><span>시간·요일 sin/cos, 지연값, 불쾌지수, 체류인구 추정</span></div>
+        </div>
+      </div>
+      <div class="step-arrow"><span aria-hidden="true">↓</span><span>시간 순서 분할 · 스케일링 → 학습 (PyTorch LSTM · Apple MPS)</span></div>
+      <div class="layer">
+        <div class="layer-label"><span class="mono">MODELS</span><span>트리플 예측 모델</span></div>
+        <div class="items">
+          <div class="item pill"><b>발전량 예측</b><span>발전소 재생에너지</span></div>
+          <div class="item pill"><b>수요량 예측</b><span>지역 전력 수요</span></div>
+          <div class="item pill"><b>SMP 예측</b><span>계통한계가격·입찰가</span></div>
+        </div>
+      </div>
+      <div class="step-arrow"><span aria-hidden="true">↓</span><span>모델 가중치 → 추론 API</span></div>
+      <div class="layer">
+        <div class="layer-label"><span class="mono">SERVING</span><span>서비스</span></div>
+        <div class="items">
+          <div class="item out"><b>FastAPI</b><span>예측·시세 JSON API</span></div>
+          <div class="item out"><b>대시보드 · 웹</b><span>Streamlit v4, v7, 모바일</span></div>
+          <div class="item out"><b>eXeco VPP</b><span>KPX 입찰 구간 최적화</span></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="system" aria-labelledby="h-sys">
+    <div class="sec-head">
+      <h2 id="h-sys">시스템 구성</h2>
+      <p>별도의 클라우드 서버 없이 개발용 MacBook이 웹 서버 역할을 합니다.<br>외부 요청은 Tailscale Funnel이 HTTPS로 받아 맥북 안의 서비스로 전달합니다.</p>
+    </div>
+    <div class="flow" role="group" aria-label="배포 구조: 인터넷에서 Tailscale Funnel을 거쳐 맥북 안의 서비스로 전달">
+      <svg class="flow-lines" viewBox="0 0 960 423" aria-hidden="true">
+        <line class="ln" x1="483" y1="88" x2="358" y2="222"/>
+        <circle cx="358" cy="222" r="5" fill="#f0ff46"/>
+        <line class="ln" x1="457" y1="88" x2="112" y2="222"/>
+        <circle cx="112" cy="222" r="5" fill="#f0ff46"/>
+        <line class="ln" x1="502" y1="87" x2="846" y2="222"/>
+        <circle cx="846" cy="222" r="5" fill="#f0ff46"/>
+        <path class="dash" d="M365 361 V389 H595 V361"/>
+        <circle cx="595" cy="361" r="5" fill="#ffffff"/>
+      </svg>
+      <div class="flow-pill"><small>PUBLIC · 인터넷에서 접근 가능</small><div class="pill-btn">Tailscale Funnel</div></div>
+      <span class="flow-down" aria-hidden="true">↓</span>
+      <div class="flow-local">LOCAL · MacBook Pro (M1)</div>
+      <div class="flow-cards">
+        <div class="node"><span class="k">STREAMLIT</span><span class="t hi">메인 대시보드</span><span class="d">Python 웹 프레임워크</span></div>
+        <div class="node"><span class="k">PROXY</span><span class="t">공개 멀티플렉스 서버</span><span class="d">버전별 경로 분배<br>/v7 · /v6 · /v5/smp · /mobile</span></div>
+        <div class="node"><span class="k">API</span><span class="t">FastAPI</span><span class="d">예측·시세 JSON API</span></div>
+        <div class="node"><span class="k">DOCS</span><span class="t">문서 서버</span><span class="d">이 브리핑과 학습 자료</span></div>
+      </div>
+      <p class="flow-note">PROXY가 경로별로 요청을 나누고, API 요청은 FastAPI로 넘깁니다.</p>
+    </div>
+    <div class="table-wrap" tabindex="0" role="region" aria-label="기술 선택 표">
+      <table>
+        <colgroup><col style="width:182px"><col style="width:224px"><col style="width:554px"></colgroup>
+        <thead><tr><th scope="col">구성 요소</th><th scope="col">기술</th><th scope="col">상세</th></tr></thead>
+        <tbody>
+          <tr><td>메인 대시보드</td><td>Streamlit</td><td>데이터 과학 코드를 최소한의 프론트엔드 지식으로 웹화. 차트·지도·슬라이더가 기본 제공되어 반복 실험에 유리합니다.</td></tr>
+          <tr><td>웹 v7</td><td>React + Vite (TypeScript)</td><td>더 빠른 화면과 세밀한 UI가 필요해져 단계적으로 이전 중. v7이 최신입니다.</td></tr>
+          <tr><td>예측 API</td><td>FastAPI</td><td>모델 추론을 JSON으로 노출해 어느 웹 버전에서든 같은 예측값을 씁니다.</td></tr>
+          <tr><td>공개 터널</td><td>Tailscale Funnel</td><td>포트포워딩이나 도메인 구매 없이 내 기기를 HTTPS로 공개합니다.</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section class="data" aria-labelledby="h-data">
+    <div class="sec-head">
+      <h2 id="h-data">데이터</h2>
+      <p>전력 수요는 날씨(더위·추위)와 사람의 이동(관광객 유입)에 크게 좌우됩니다. 그래서 전력 데이터뿐 아니라 기상·관광·교통 데이터를 함께 수집합니다. 수집 스크립트는 모두 코드로 표와 화면을 읽어 CSV로 저장합니다.</p>
+    </div>
+    <h3>데이터 정의</h3>
+    <div class="table-wrap" tabindex="0" role="region" aria-label="데이터 정의 표">
+      <table>
+        <colgroup><col style="width:232px"><col style="width:194px"><col style="width:234px"><col style="width:300px"></colgroup>
+        <thead><tr><th scope="col">데이터</th><th scope="col">단위·해상도</th><th scope="col">갱신 주기</th><th scope="col">규모와 기간</th></tr></thead>
+        <tbody>
+          <tr><td>SMP (전국·제주)</td><td>시간 단위</td><td>실시간 15분 수집, 과거분은 일별 일괄</td><td>학습용 43,726행 (2020-12 ~ 2025-12)<br>실시간 12,444행 (2024-01 ~)</td></tr>
+          <tr><td>제주 전력수요</td><td>시간별 (MWh)</td><td>공공 파일 갱신 시</td><td>105,192행 (2013-01 ~ 2024-12)</td></tr>
+          <tr><td>제주 실시간 수급</td><td>5분</td><td>5분</td><td>최근 약 1일치 버퍼</td></tr>
+          <tr><td>기상 (ASOS)</td><td>시간별 기온 등</td><td>관측 파일·API, 실시간은 1시간</td><td>2013 ~ 2024</td></tr>
+          <tr><td>제주 입도객</td><td>일별</td><td>수집 시</td><td>4,718일 (2013-01 ~ 2025-12)</td></tr>
+          <tr><td>항공·해운 입출도객</td><td>일별</td><td>수집 시</td><td>4,353일 (2013 ~ 2024)</td></tr>
+          <tr><td>연료비 정산단가</td><td>월간</td><td>월간</td><td>753건 (2022 ~ 2024)</td></tr>
+          <tr><td>발전소 목록</td><td>고정 목록</td><td>변경 시</td><td>26기 (풍력 14 · 태양광 6 · ESS 4 · 화력 2)</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section class="model" aria-labelledby="h-model">
+    <div class="sec-head">
+      <h2 id="h-model">예측 모델</h2>
+      <p>수집한 CSV를 가공(피처 엔지니어링)하고, 시간 순서를 지켜 학습·검증을 나눈 뒤 LSTM 계열 딥러닝 모델을 학습합니다.<br>학습은 Apple MPS(Apple Silicon GPU 가속)에서 수행해, GPU 서버없이 로컬에서 끝냈습니다.</p>
+    </div>
+    <h3>모델 성능</h3>
+    <div class="table-wrap" tabindex="0" role="region" aria-label="모델 성능 표">
+      <table>
+        <colgroup><col style="width:232px"><col style="width:324px"><col style="width:224px"><col style="width:194px"></colgroup>
+        <thead><tr><th scope="col">모델</th><th scope="col">용도</th><th scope="col">*MAPE (평균 오차 %)</th><th scope="col">*R² (설명력)</th></tr></thead>
+        <tbody>
+          <tr><td>수요 *AR+*GBM</td><td>제주 전력 수요 1시간 앞</td><td>4.67</td><td>0.929</td></tr>
+          <tr><td>수요 *LSTM (demand_only)</td><td>제주 전력수요 1시간 앞</td><td>5.22</td><td>0.910</td></tr>
+          <tr><td>Solar V2</td><td>제주 태양광 발전 예측</td><td>-</td><td>0.9685</td></tr>
+          <tr><td>SMP</td><td>제주 하루전 가격</td><td>11.75</td><td>0.203</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="notes">*AR : Autoregressive Model, 자기 회귀 모델<br>*GBM : Gradient Boosting Machine, 머신 러닝 모델-지도 학습<br>*LSTM : Long Short-Term Memory, 딥러닝 모델<br>*MAPE : 예측 오차가 실제값에서 차지하는 비율을 백분율(%)로 나타낸 평균 오차. 낮을수록 좋음<br>*R² : 모델이 데이터의 전체 분산(변동성)을 얼마나 잘 설명하는지 나타내는 비율. 1에 가까울수록 좋음</p>
+    <h3>모델 학습</h3>
+    <ol class="pipe" style="list-style:none;margin:0;padding:0">
+      <li class="node"><span class="k">1. INPUT</span><span class="t hi">원본 데이터</span><span class="d">SMP·기상·입도객·발전소</span></li>
+      <li class="node"><span class="k">2. FEATURES</span><span class="t hi">피처 엔지니어링</span><span class="d">시간·요일 sin/cos, 지연값, 이동평균, 불쾌지수, 체류인구 추정</span></li>
+      <li class="node"><span class="k">3. SCALING</span><span class="t hi">스케일링</span><span class="d">학습 구간에서만 기준 계산 (누수 방지*)</span></li>
+      <li class="node"><span class="k">4. TRAIN</span><span class="t hi">모델 학습</span><span class="d">PyTorch LSTM · Apple MPS<br>seed 42 · EarlyStopping<br>과거 168시간 → 다음 수요</span></li>
+      <li class="node"><span class="k">5. ARTIFACTS</span><span class="t hi">학습 산출물</span><span class="d">models/*.pt (가중치)<br>scaler.npz · metrics.json</span></li>
+      <li class="node"><span class="k">6. SERVE</span><span class="t hi">추론 서빙</span><span class="d">FastAPI → JSON<br>SMP 화면 · 웹 v5~v7</span></li>
+    </ol>
+    <div class="small-note">
+      <p>공통 학습 설정: 시간 순서로 학습·검증 분할, 스케일링 기준은 학습 구간에서만 계산, seed 42, EarlyStopping, Apple MPS(로컬 GPU)에서 학습.</p>
+      <p>누수 방지* 시험의 정답을 미리 보지 않도록 검증 데이터를 학습에서 분리하는 것. 시계열은 과거에서 미래 순서로만 나누고, 정규화 기준값도 학습 데이터에서만 계산합니다.</p>
+    </div>
+  </section>
+
+  <section class="validation" aria-labelledby="h-val">
+    <div class="sec-head">
+      <h2 id="h-val">검증 상태와 한계</h2>
+      <p>연구 프로젝트로서 된 것과 아직 안 된 것을 구분해 둡니다.</p>
+    </div>
+    <div class="table-wrap" tabindex="0" role="region" aria-label="검증 상태 표">
+      <table class="tbl-hi">
+        <colgroup><col style="width:232px"><col style="width:714px"></colgroup>
+        <thead><tr><th scope="col">상태</th><th scope="col">내용</th></tr></thead>
+        <tbody>
+          <tr><td>구현·재검증 완료</td><td>데이터 수집 파이프라인, 수요 예측 모델(오차 약 6%), SMP 누수 수정 후 재학습, walk-forward 검증 도입</td></tr>
+          <tr><td>한계</td><td>SMP 예측 정확도는 수요보다 낮음. 데이터 수집에 실패하면 일부 화면이 데모 값으로 대체 표시되며, 실측과 모의를 구분해 표기하는 작업이 후속 과제입니다.</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section class="glossary" aria-labelledby="h-gl">
+    <div class="sec-head"><h2 id="h-gl">용어 사전</h2></div>
+    <div class="table-wrap" tabindex="0" role="region" aria-label="용어 사전 표">
+      <table class="tbl-hi">
+        <colgroup><col style="width:252px"><col style="width:694px"></colgroup>
+        <thead><tr><th scope="col">용어</th><th scope="col">설명</th></tr></thead>
+        <tbody>
+          <tr><td>SMP (계통한계가격)</td><td>전력 도매시장에서 매시 결정되는 1kWh당 거래 가격. 수요가 공급능력에 근접하면 급등합니다.</td></tr>
+          <tr><td>EPSIS / KPX</td><td>한국전력거래소(KPX)와 그 전력 통계 시스템(EPSIS). 전력 시장 데이터의 공식 원천입니다.</td></tr>
+          <tr><td>ASOS</td><td>기상청 종관기상관측망. 기온·습도·풍속 등을 정시 관측합니다.</td></tr>
+          <tr><td>THI (불쾌지수)</td><td>기온과 습도를 조합한 지수. 여름 에어컨 사용과 전력수요가 강하게 연결됩니다.</td></tr>
+          <tr><td>LSTM</td><td>시간 흐름이 있는 데이터를 다루는 딥러닝 신경망. 최근 168시간의 패턴으로 다음 시간을 예측합니다.</td></tr>
+          <tr><td>MAPE / R²</td><td>MAPE는 평균 오차(%)로 낮을수록 좋고, R²는 설명력으로 1에 가까울수록 좋습니다 (0 이하는 추측만 못함).</td></tr>
+          <tr><td>누수 (data leakage)</td><td>검증용 정보가 학습에 새어 들어가 성능이 실제보다 과대평가되는 결함입니다.</td></tr>
+          <tr><td>walk-forward 검증</td><td>기간을 한 칸씩 옮겨가며 반복 검증하는 방식으로, 시계열 모델의 실전 성능을 더 믿을 수 있게 측정합니다.</td></tr>
+          <tr><td>MPS</td><td>Apple Silicon의 GPU 가속 인터페이스. CUDA 대신 이것으로 로컬 학습했습니다.</td></tr>
+          <tr><td>Tailscale Funnel</td><td>내 기기를 공인 HTTPS 주소로 공개해주는 터널링 서비스입니다.</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+</main>
+
+</html>
